@@ -6,7 +6,7 @@
 #define SQH 0.707106781186547  /* square root of 2 */
 #define SWAP(a,b)  tempr=(a); (a) = (b); (b) = tempr
 #define IMAGE_SIZE 512
-#define QF 90
+#define QF 50
 
 
 static void fft1();
@@ -240,14 +240,24 @@ int n;
 
 unsigned char image_byte[IMAGE_SIZE][IMAGE_SIZE];
 
+unsigned char s_matrix[8][8] = {{16,11,10,16,24,40,51,61},
+                                {12,12,14,19,26,58,60,55},
+                                {14,13,16,24,40,57,69,56},
+                                {14,17,22,29,51,87,80,62},
+                                {18,22,37,56,68,109,103,77},
+                                {24,36,55,64,81,104,113,92},
+                                {49,64,78,87,103,121,120,101},
+                                {72,92,95,98,112,100,103,99}};
+
 
 //最左上為0,0
 //最右下為64,64
 assign_block(float** target,int x,int y){
     int i,j;
+    // minus 128
     for(i = 0; i < 8 ; i++){
         for(j = 0 ; j < 8 ; j++){
-            target[i][j] = (float)image_byte[8*y+i][8*x+j];
+            target[i][j] = (float)image_byte[8*y+i][8*x+j] - 128 ;
         }
     }
 }
@@ -272,13 +282,17 @@ quantization(float** block){
   else if (QF >= 50)
     factor = 200 - 2 * QF;
 
+  float q_matrix[8][8];
+
   int i,j;
   //printf("factor:%f\n",factor);
   for(i = 0; i < 8 ; i++){
         for(j = 0 ; j < 8 ; j++){
-            block[i][j] = block[i][j] * factor / 100;
+            q_matrix[i][j] = s_matrix[i][j] * factor / 100;
+            block[i][j] = block[i][j] / q_matrix [i][j];
         }
-    }
+  }
+
 }
 
 int main(int argc,char **argv){
