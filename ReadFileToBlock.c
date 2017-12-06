@@ -6,6 +6,7 @@
 #define SQH 0.707106781186547  /* square root of 2 */
 #define SWAP(a,b)  tempr=(a); (a) = (b); (b) = tempr
 #define IMAGE_SIZE 512
+#define QF 90
 
 
 static void fft1();
@@ -264,6 +265,22 @@ float** get_block(int x,int y){
     return block;
 } 
 
+quantization(float** block){
+  float factor;
+  if(QF < 50)
+    factor = 5000 / QF;
+  else if (QF >= 50)
+    factor = 200 - 2 * QF;
+
+  int i,j;
+  //printf("factor:%f\n",factor);
+  for(i = 0; i < 8 ; i++){
+        for(j = 0 ; j < 8 ; j++){
+            block[i][j] = block[i][j] * factor / 100;
+        }
+    }
+}
+
 int main(int argc,char **argv){
 
     // read and save a byte arr
@@ -283,8 +300,9 @@ int main(int argc,char **argv){
        
     float **block = get_block(0,0);
     
+    dct2(block,8);
 
-    //dct2(block,8);
+    quantization(block);
 
     for(i = 0; i < 8 ; i++){
         for(j = 0 ; j < 8 ; j++){
