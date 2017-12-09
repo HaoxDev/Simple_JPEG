@@ -375,7 +375,7 @@ void output(unsigned char byte){
 
 void bit_output(char bit){
   byte_for_output <<= 1;
-  byte_for_output += bit;
+  byte_for_output += bit - '0';
   byte_count++;
   // for output
   if(byte_count == 8)
@@ -386,24 +386,18 @@ void bit_output(char bit){
   }
 }
 
-void bit_code_handler(char* bitstr){
-  int bst_length = strlen(bitstr);
+void output_preproc(unsigned int val,int len){
+  char bit_str[32];
   int i;
-  for( i = 0 ; i < bst_length ; i++){
-      bit_output((char)(bitstr[i] - '0'));
+  for(i = 31 ; i >= 0 ; i--){
+    bit_str[i] = (val & 1) + '0';
+    val >>= 1;
   }
-}
 
-char *int2bin(int val, char *buffer, int buf_size) {
-    buffer += (buf_size - 1);
+  for(i = 32-len ; i < 32 ; i++ ){
+    bit_output(bit_str[i]);
+  }
 
-    for (int i = 31; i >= 0; i--) {
-        *buffer-- = (val & 1) + '0';
-
-        val >>= 1;
-    }
-
-    return buffer;
 }
 
 int main(int argc,char **argv){
@@ -438,6 +432,10 @@ int main(int argc,char **argv){
         printf("\n");
     }
     */
+
+    output_preproc(0xff,8);
+    output_preproc(0x08,4);
+    output_preproc(0x00,4);
 
 
 }
