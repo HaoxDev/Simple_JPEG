@@ -496,7 +496,7 @@ void zig_zag_proc(float** block){
         //outputZRL
         output_preproc(acHuffmanTable[225],acHuffmanLength[225]);
       }
-      output_preproc(acHuffmanTable[15*run + size],acHuffmanLength[15*run + size]);
+      output_preproc(acHuffmanTable[16*run + size],acHuffmanLength[16*run + size]);
       output_preproc(get_diff_codeword(val),size);
     }
   }
