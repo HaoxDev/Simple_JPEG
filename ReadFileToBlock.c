@@ -7,7 +7,7 @@
 #define SQH 0.707106781186547  /* square root of 2 */
 #define SWAP(a,b)  tempr=(a); (a) = (b); (b) = tempr
 #define IMAGE_SIZE 512
-#define QF 5
+#define QF 99
 
 
 static void fft1();
@@ -362,7 +362,7 @@ int main(int argc,char **argv){
     int i,j;
 
     
-
+    // read file and put into a big array
     unsigned char temp;
     for( i = 0 ; i < IMAGE_SIZE ; i++){
         for( j = 0 ; j < IMAGE_SIZE ; j++){
@@ -371,7 +371,7 @@ int main(int argc,char **argv){
         }
     }
     
-    
+    // malloc and free each block, and process it.
     for( i = 0 ; i < IMAGE_SIZE / 8 ; i++){
       for( j = 0 ; j < IMAGE_SIZE / 8 ; j++){
             float** block = get_block(j,i);
@@ -388,10 +388,10 @@ int main(int argc,char **argv){
     }
     
     
-    /*
+    //for testing, useless
     float** block = get_block(0,0);
     dct2(block,8);
-    //quantization(block);
+    quantization(block);
 
     for(i = 0; i < 8 ; i++){
         for(j = 0 ; j < 8 ; j++){
@@ -399,7 +399,7 @@ int main(int argc,char **argv){
         }
         printf("\n");
     }
-    */
+    
     
 
 }
