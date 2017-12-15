@@ -7,7 +7,7 @@
 #define SQH 0.707106781186547  /* square root of 2 */
 #define SWAP(a,b)  tempr=(a); (a) = (b); (b) = tempr
 #define IMAGE_SIZE 512
-#define QF 50
+#define QF 5
 
 
 static void fft1();
@@ -362,6 +362,7 @@ int main(int argc,char **argv){
     int i,j;
 
     
+
     unsigned char temp;
     for( i = 0 ; i < IMAGE_SIZE ; i++){
         for( j = 0 ; j < IMAGE_SIZE ; j++){
@@ -369,7 +370,8 @@ int main(int argc,char **argv){
             image_byte[i][j] = temp;
         }
     }
-      
+    
+    
     for( i = 0 ; i < IMAGE_SIZE / 8 ; i++){
       for( j = 0 ; j < IMAGE_SIZE / 8 ; j++){
             float** block = get_block(j,i);
@@ -385,10 +387,11 @@ int main(int argc,char **argv){
       output(byte_for_output);
     }
     
+    
     /*
     float** block = get_block(0,0);
     dct2(block,8);
-    quantization(block);
+    //quantization(block);
 
     for(i = 0; i < 8 ; i++){
         for(j = 0 ; j < 8 ; j++){
@@ -398,7 +401,6 @@ int main(int argc,char **argv){
     }
     */
     
-
 
 }
 
@@ -490,7 +492,7 @@ void zig_zag_proc(float** block){
     if(val == 0)
       run++;
     else{
-      size = (int)(floor(log2((double)abs(val))) + 1);
+      size = (int)(floor(log2((float)abs(val))) + 1);
       while(run > 15){
         run -= 15;
         //outputZRL
