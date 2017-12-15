@@ -249,7 +249,21 @@ unsigned char s_matrix[8][8] = {{16,11,10,16,24,40,51,61},
                                 {24,36,55,64,81,104,113,92},
                                 {49,64,78,87,103,121,120,101},
                                 {72,92,95,98,112,100,103,99}};
+const int zigZagOrder[64] = {
+         0,  1,  8, 16,  9,  2,  3, 10,
+        17, 24, 32, 25, 18, 11,  4,  5,
+        12, 19, 26, 33, 40, 48, 41, 34,
+        27, 20, 13,  6,  7, 14, 21, 28,
+        35, 42, 49, 56, 57, 50, 43, 36,
+        29, 22, 15, 23, 30, 37, 44, 51,
+        58, 59, 52, 45, 38, 31, 39, 46,
+        53, 60, 61, 54, 47, 55, 62, 63
+    };
+
 FILE *fout;
+unsigned char byte_for_output = 0;
+int byte_count = 0;
+int dc_dpcm = 0;
 
 const int acHuffmanLength[256] = {
      4, 2, 2, 3, 4, 5, 7, 8,
@@ -320,10 +334,108 @@ const int acHuffmanTable[256] = {
     0x07f9,0xfff5,0xfff6,0xfff7,0xfff8,0xfff9,0xfffa,0xfffb,
     0xfffc,0xfffd,0xfffe,0x0000,0x0000,0x0000,0x0000,0x0000
 };
+const char dcHuffmanValues[12] = { 0,1,2,3,4,5,6,7,8,9,10,11 };
+const int dcHuffmanLength[12] = { 2,3,3,3,3,3,4,5,6,7,8,9 };
+
+void assign_block(float** target,int x,int y);
+float** get_block(int x,int y);
+void quantization(float** block);
+void zig_zag_proc(float** block);
+void output(unsigned char byte);
+void bit_output(char bit);
+void output_preproc(unsigned int val,int len);
+int get_diff_codeword(int);
+void block_proc(float** );
+void dc_proc(float);
+void ac_proc(float **);
+
+
+int main(int argc,char **argv){
+
+    // read and save a byte arr
+
+    char* input_fname = argv[1];
+    FILE *fin;
+
+    fin = fopen(input_fname,"rb");
+    fout = fopen(argv[2],"wb");
+    int i,j;
+
+    
+    unsigned char temp;
+    for( i = 0 ; i < IMAGE_SIZE ; i++){
+        for( j = 0 ; j < IMAGE_SIZE ; j++){
+            fread(&temp, sizeof(char), 1, fin);
+            image_byte[i][j] = temp;
+        }
+    }
+      
+    for( i = 0 ; i < IMAGE_SIZE / 8 ; i++){
+      for( j = 0 ; j < IMAGE_SIZE / 8 ; j++){
+            float** block = get_block(j,i);
+            block_proc(block);
+            free(block);
+        }
+    }
+
+    //補0輸出
+    if(byte_count != 0)
+    {
+      byte_for_output <<= 8 - byte_count;
+      output(byte_for_output);
+    }
+    
+    /*
+    float** block = get_block(0,0);
+    dct2(block,8);
+    quantization(block);
+
+    for(i = 0; i < 8 ; i++){
+        for(j = 0 ; j < 8 ; j++){
+            printf("%f\t",* (*(block+i)+j));
+        }
+        printf("\n");
+    }
+    */
+    
+
+
+}
+
+void block_proc(float** block){
+  dct2(block,8);
+  quantization(block);
+  dc_proc(block[0][0]);
+  ac_proc(block);
+}
+
+void ac_proc(float** block){
+  zig_zag_proc(block);
+}
+
+void dc_proc(float dc){
+  int u32_dc = (int)dc;
+  //doing dpcm
+  u32_dc = u32_dc - dc_dpcm;
+  dc_dpcm = u32_dc;
+  int ssss;
+  if(u32_dc != 0)
+    ssss = (int)(floor(log2((double)abs(u32_dc))) + 1);
+  else
+    ssss = 0;
+
+  int diff_val = get_diff_codeword(u32_dc);
+
+  //dc table
+  output_preproc(dcHuffmanValues[ssss],dcHuffmanLength[ssss]);
+  //diff val
+  output_preproc(diff_val,ssss);
+
+}
 
 //最左上為0,0
 //最右下為64,64
-assign_block(float** target,int x,int y){
+void assign_block(float** target,int x,int y){
     int i,j;
     // minus 128
     for(i = 0; i < 8 ; i++){
@@ -346,7 +458,7 @@ float** get_block(int x,int y){
     return block;
 } 
 
-quantization(float** block){
+void quantization(float** block){
   float factor;
   if(QF < 50)
     factor = 5000 / QF;
@@ -366,8 +478,31 @@ quantization(float** block){
 
 }
 
-unsigned char byte_for_output = 0;
-int byte_count = 0;
+void zig_zag_proc(float** block){
+  int x,y,i;
+  int run = 0;
+  int size = 0;
+  for(i = 1 ; i < 64 ; i++){
+    x = zigZagOrder[i]/8;
+    y = (zigZagOrder[i]) % 8;
+    //process ac run
+    int val = (int)block[y][x];
+    if(val == 0)
+      run++;
+    else{
+      size = (int)(floor(log2((double)abs(val))) + 1);
+      while(run > 15){
+        run -= 15;
+        //outputZRL
+        output_preproc(acHuffmanTable[225],acHuffmanLength[225]);
+      }
+      output_preproc(acHuffmanTable[15*run + size],acHuffmanLength[15*run + size]);
+      output_preproc(get_diff_codeword(val),size);
+    }
+  }
+  //SEND EOB
+  output_preproc(acHuffmanTable[0],acHuffmanLength[0]);
+}
 
 void output(unsigned char byte){
   fwrite(&byte,1,sizeof(byte),fout);
@@ -400,44 +535,27 @@ void output_preproc(unsigned int val,int len){
 
 }
 
-int main(int argc,char **argv){
+int get_diff_codeword(int diff_val){
+  int ssss;
 
-    // read and save a byte arr
+  if(diff_val != 0)
+    ssss = (int)(floor(log2((double)abs(diff_val))) + 1);
+  else
+    ssss = 0;
 
-    char* input_fname = argv[1];
-    FILE *fin;
+  int diff_size = (int)pow(2,ssss);
+  int result;
+  int lower_bound = (int) pow(2,ssss-1);
 
-    fin = fopen(input_fname,"rb");
-    fout = fopen(argv[2],"wb");
-    int i,j;
-    /*
-    unsigned char temp;
-    for( i = 0 ; i < IMAGE_SIZE ; i++){
-        for( j = 0 ; j < IMAGE_SIZE ; j++){
-            fread(&temp, sizeof(char), 1, fin);
-            image_byte[i][j] = temp;
-        }
-    }
-       
-    float **block = get_block(0,0);
-    
-    dct2(block,8);
+  if(diff_val > 0)
+    result = (diff_val - lower_bound) + (diff_size / 2);
+  else if(diff_val < 0 )
+    result = lower_bound + diff_val + diff_size / 2 - 1;
+  else if (diff_val == 0)
+    result = 0;
 
-    quantization(block);
-
-    for(i = 0; i < 8 ; i++){
-        for(j = 0 ; j < 8 ; j++){
-            printf("%f\t",* (*(block+i)+j));
-        }
-        printf("\n");
-    }
-    */
-
-    output_preproc(0xff,8);
-    output_preproc(0x08,4);
-    output_preproc(0x00,4);
-
+  
+  return result;
 
 }
-
 
