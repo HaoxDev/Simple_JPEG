@@ -390,6 +390,7 @@ int main(int argc,char **argv){
       byte_for_output <<= 8 - byte_count;
       output(byte_for_output);
     }
+    
      
     
     //for testing, useless
@@ -404,6 +405,19 @@ int main(int argc,char **argv){
         printf("\n");
     }
     */
+    
+    /*
+    dc_proc(-24);
+    dc_proc(-24);
+    dc_proc(-26);
+    //補0輸出
+    if(byte_count != 0)
+    {
+      byte_for_output <<= 8 - byte_count;
+      output(byte_for_output);
+    }
+    */
+    
     
     return 0;
     
@@ -422,7 +436,7 @@ void block_proc(float** block){
   dct2(block,8);
   quantization(block);
   dc_proc(block[0][0]);
-  ac_proc(block);
+  //ac_proc(block);
 }
 
 void ac_proc(float** block){
@@ -441,13 +455,15 @@ void dc_proc(float dc){
     ssss = (int)(floor(log2((double)abs(u32_dc))) + 1);
   else
     ssss = 0;
-  
  
 
   int diff_val = get_diff_codeword(u32_dc);
   
   //dc table
   output_preproc(dcHuffmanValues[ssss],dcHuffmanLength[ssss]);
+
+
+
   //diff val
   if(ssss != 0)
     output_preproc(diff_val,ssss);

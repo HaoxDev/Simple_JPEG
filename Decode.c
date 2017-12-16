@@ -243,12 +243,14 @@ FILE *fout;
 FILE *fin;
 char temp_byte;
 int read_counter = 0;
+int dpcm_pre_val = 0;
 const int dcHuffmanValues[12] = { 0,2,3,4,5,6,14,30,62,126,254,510 };
 const int dcHuffmanLength[12] = { 2,3,3,3,3,3,4,5,6,7,8,9 };
 
 char get_bit();
 int dc_get_ssss();
 int get_diff_val(int);
+int get_dc_val(int diff_val);
 
 int main(int argc,char **argv){
 
@@ -258,12 +260,21 @@ int main(int argc,char **argv){
     fout = fopen(argv[2],"wb");
     int i,j;
 
-    /*
-    for(i=0 ; i< 15 ;i++){
-        printf("bit:%d\n",get_bit());
+    for(i = 0 ; i < 64 ;i++){
+        for(j = 0 ; j < 64 ; j++){
+            int ssss = dc_get_ssss();
+            int diff_val = get_diff_val(ssss);
+            int dc_val = get_dc_val(diff_val);
+            
+        }
     }
-    */
 
+}
+
+int get_dc_val(int diff_val){
+    int dc_val = dpcm_pre_val + diff_val;
+    dpcm_pre_val = dc_val;
+    return dc_val;
 }
 
 char get_bit(){
@@ -318,8 +329,11 @@ int get_diff_val(int ssss){
         diff_val = diff_index - diff_tab_len + 1;
     }
 
-    if(ssss == 0)
-        return 0;
+    if(ssss == 0){
+        if(get_bit() == 0){
+            return 0;
+        }
+    }
     else
         return diff_val;
 }
