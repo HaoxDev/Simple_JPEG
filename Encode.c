@@ -7,7 +7,7 @@
 #define SQH 0.707106781186547  /* square root of 2 */
 #define SWAP(a,b)  tempr=(a); (a) = (b); (b) = tempr
 #define IMAGE_SIZE 512
-#define QF 90
+#define QF 50
 
 
 static void fft1();
@@ -334,9 +334,10 @@ const int acHuffmanTable[256] = {
     0x07f9,0xfff5,0xfff6,0xfff7,0xfff8,0xfff9,0xfffa,0xfffb,
     0xfffc,0xfffd,0xfffe,0x0000,0x0000,0x0000,0x0000,0x0000
 };
-const char dcHuffmanValues[12] = { 0,1,2,3,4,5,6,7,8,9,10,11 };
+const int dcHuffmanValues[12] = { 0,2,3,4,5,6,14,30,62,126,254,510 };;
 const int dcHuffmanLength[12] = { 2,3,3,3,3,3,4,5,6,7,8,9 };
 
+void _2d_free(float** ptr);
 void assign_block(float** target,int x,int y);
 float** get_block(int x,int y);
 void quantization(float** block);
@@ -370,13 +371,16 @@ int main(int argc,char **argv){
             image_byte[i][j] = temp;
         }
     }
+
+    
+
     
     // malloc and free each block, and process it.
     for( i = 0 ; i < IMAGE_SIZE / 8 ; i++){
       for( j = 0 ; j < IMAGE_SIZE / 8 ; j++){
             float** block = get_block(j,i);
             block_proc(block);
-            free(block);
+            _2d_free(block);
         }
     }
 
@@ -386,22 +390,32 @@ int main(int argc,char **argv){
       byte_for_output <<= 8 - byte_count;
       output(byte_for_output);
     }
-    
+     
     
     //for testing, useless
-    float** block = get_block(0,0);
+    /*
+    float** block = get_block(20,20);
     dct2(block,8);
     quantization(block);
-
     for(i = 0; i < 8 ; i++){
         for(j = 0 ; j < 8 ; j++){
             printf("%f\t",* (*(block+i)+j));
         }
         printf("\n");
     }
+    */
     
+    return 0;
     
 
+}
+
+void _2d_free(float** ptr){
+  int i;
+  for( i = 0 ; i < 8 ; i++){
+    free(ptr[i]);
+  }
+  free(ptr);
 }
 
 void block_proc(float** block){
@@ -417,22 +431,28 @@ void ac_proc(float** block){
 
 void dc_proc(float dc){
   int u32_dc = (int)dc;
+  int tmp = u32_dc;
   //doing dpcm
   u32_dc = u32_dc - dc_dpcm;
-  dc_dpcm = u32_dc;
+  dc_dpcm = tmp;
+
   int ssss;
   if(u32_dc != 0)
     ssss = (int)(floor(log2((double)abs(u32_dc))) + 1);
   else
     ssss = 0;
+  
+ 
 
   int diff_val = get_diff_codeword(u32_dc);
-
+  
   //dc table
   output_preproc(dcHuffmanValues[ssss],dcHuffmanLength[ssss]);
   //diff val
-  output_preproc(diff_val,ssss);
-
+  if(ssss != 0)
+    output_preproc(diff_val,ssss);
+  else
+    output_preproc(0,1);
 }
 
 //最左上為0,0
@@ -455,7 +475,7 @@ float** get_block(int x,int y){
     for(i = 0 ; i < 8 ; i++){
         block[i] = (float *) malloc(sizeof(float) * 8);
     }
-    assign_block(block,0,0);
+    assign_block(block,x,y);
 
     return block;
 } 
