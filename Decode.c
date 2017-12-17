@@ -244,6 +244,16 @@ void _2d_free(float** ptr){
   free(ptr);
 }
 
+void printBlock(float** block){
+    int i,j;
+    for(i = 0; i < 8 ; i++){
+        for(j = 0 ; j < 8 ; j++){
+            printf("%d\t",(int)round(* (*(block+i)+j)));
+        }
+        printf("\n");
+    }
+}
+
 /* ----------------------------------------------- */
 
 unsigned char image_byte[IMAGE_SIZE][IMAGE_SIZE];
@@ -370,9 +380,11 @@ int main(int argc,char **argv){
         for( j = 0 ; j < IMAGE_SIZE/8 ; j++){
             int dc = get_next_dc();
             float **block = ac_decode_proc(dc);
+            //printBlock(block);
             de_quantization(block);
             idct2(block,8);
             setBlock(block,j,i);
+            _2d_free(block);
         }
     }
     
@@ -398,6 +410,8 @@ int main(int argc,char **argv){
 
 }
 
+
+
 void de_quantization(float** block){
 
   float factor;
@@ -409,7 +423,6 @@ void de_quantization(float** block){
   float q_matrix[8][8];
 
   int i,j;
-  //printf("factor:%f\n",factor);
   for(i = 0; i < 8 ; i++){
         for(j = 0 ; j < 8 ; j++){
             q_matrix[i][j] = s_matrix[i][j] * factor / 100;
@@ -450,6 +463,7 @@ float** ac_decode_proc(int dc){
     int count = 1;
     for( ;;){
         int index_of_ac = search_codeword_ac();
+        //printf("%d\n",index_of_ac);
         //printf("HERE\n");
         int run = index_of_ac / 16;
         int size = index_of_ac % 16;
@@ -465,12 +479,10 @@ float** ac_decode_proc(int dc){
         if(type == 0){
             int k;
             for(k = 0 ; k < run ; k++){
-                block[zigZagOrder[count]/8][zigZagOrder[count]%8] = 0;
-                //printf("val:%d count:%d \n",0,count);   
+                block[zigZagOrder[count]/8][zigZagOrder[count]%8] = 0;   
                 count++;
             }
             int diff_val = get_diff_val(size);
-            //printf("val:%d count:%d \n",diff_val,count);
             block[zigZagOrder[count]/8][zigZagOrder[count]%8] = diff_val;
             count++;
         }
@@ -478,24 +490,21 @@ float** ac_decode_proc(int dc){
             int k;
             for(k = 0 ; k < 15 ; k++){
                 block[zigZagOrder[count]/8][zigZagOrder[count]%8] = 0;
-                //printf("val:%d count:%d \n",0,count);
                 count++;
             }  
         }
         else if(type == 2){
-            int run = 64 - count;
-            int i;
-            //printf("EOB count:%d\n",count);
+            int res = 64 - count;
             int k;
-            for(k = 0 ; k < run ; k++){
-                block[zigZagOrder[count]%8][zigZagOrder[count]/8] = 0;
-                //printf("%d ",0);
-                //printf("val:%d count:%d \n",0,count);
+            for(k = 0 ; k < res ; k++){
+                block[zigZagOrder[count]/8][zigZagOrder[count]%8] = 0;
                 count++;
             }
             
             break;
         }
+
+
         
     }
 

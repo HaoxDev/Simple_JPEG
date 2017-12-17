@@ -235,6 +235,16 @@ int n;
   free(y);
 }
 
+void printBlock(float** block){
+    int i,j;
+    for(i = 0; i < 8 ; i++){
+        for(j = 0 ; j < 8 ; j++){
+            printf("%d\t",(int)round(* (*(block+i)+j)));
+        }
+        printf("\n");
+    }
+}
+
 /* ----------------------------------------------- */
 
 
@@ -521,7 +531,7 @@ void quantization(float** block){
   for(i = 0; i < 8 ; i++){
         for(j = 0 ; j < 8 ; j++){
             q_matrix[i][j] = s_matrix[i][j] * factor / 100;
-            block[i][j] = block[i][j] / q_matrix [i][j];
+            block[i][j] = round(block[i][j] / q_matrix [i][j]);
         }
   }
 
@@ -536,8 +546,6 @@ void zig_zag_proc(float** block){
     y = (zigZagOrder[i]) / 8;
     //process ac run
     int val = (int)round(block[y][x]);
-    //printf("size:%d val:%d count:%d\n",size,val,i);
-    //printf("%d ",val);
     if(val == 0){
       run++;
     }
@@ -545,18 +553,14 @@ void zig_zag_proc(float** block){
       size = (int)(floor(log2((float)abs(val))) + 1);
       while(run > 15){
         run -= 15;
-        //outputZRL
         output_preproc(acHuffmanTable[240],acHuffmanLength[240]);
       }
-      //printf("run:%d size:%d\n",run,size);
-      //printf("size:%d val:%d count:%d\n",size,val,i);
       output_preproc(acHuffmanTable[16*run + size],acHuffmanLength[16*run + size]);
       output_preproc(get_diff_codeword(val),size);
       run = 0;
     }
   }
   //SEND EOB
-  //printf("run:%d size:%d\n",0,0);
   output_preproc(acHuffmanTable[0],acHuffmanLength[0]);
 }
 
