@@ -358,8 +358,7 @@ void de_quantization(float** block);
 
 int main(int argc,char **argv){
 
-    printf("QF = ");
-    scanf("%d",&QF);
+    QF = atoi(argv[3]);
 
     char* input_fname = argv[1];
 

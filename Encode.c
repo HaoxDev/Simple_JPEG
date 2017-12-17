@@ -353,8 +353,7 @@ void ac_proc(float **);
 
 int main(int argc,char **argv){
 
-    printf("QF = ");
-    scanf("%d",&QF);
+    QF = atoi(argv[3]);
 
     // read and save a byte arr
 
@@ -514,7 +513,7 @@ void quantization(float** block){
     factor = 5000 / QF;
   else if (QF >= 50)
     factor = 200 - 2 * QF;
-
+  
   float q_matrix[8][8];
 
   int i,j;
