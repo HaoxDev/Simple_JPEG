@@ -7,7 +7,6 @@
 #define SQH 0.707106781186547  /* square root of 2 */
 #define SWAP(a,b)  tempr=(a); (a) = (b); (b) = tempr
 #define IMAGE_SIZE 512
-#define QF 50
 
 
 static void fft1();
@@ -264,6 +263,7 @@ FILE *fout;
 unsigned char byte_for_output = 0;
 int byte_count = 0;
 int dc_dpcm = 0;
+int QF;
 
 const int acHuffmanLength[256] = {
      4, 2, 2, 3, 4, 5, 7, 8,
@@ -352,6 +352,9 @@ void ac_proc(float **);
 
 
 int main(int argc,char **argv){
+
+    printf("QF = ");
+    scanf("%d",&QF);
 
     // read and save a byte arr
 

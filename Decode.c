@@ -7,7 +7,6 @@
 #define SQH 0.707106781186547  /* square root of 2 */
 #define SWAP(a,b)  tempr=(a); (a) = (b); (b) = tempr
 #define IMAGE_SIZE 512
-#define QF 50
 #define MSB(a) a < 0 ? 1:0
 
 
@@ -248,6 +247,7 @@ void _2d_free(float** ptr){
 /* ----------------------------------------------- */
 
 unsigned char image_byte[IMAGE_SIZE][IMAGE_SIZE];
+int QF = 0;
 FILE *fout;
 FILE *fin;
 char temp_byte;
@@ -357,6 +357,9 @@ void write_file();
 void de_quantization(float** block);
 
 int main(int argc,char **argv){
+
+    printf("QF = ");
+    scanf("%d",&QF);
 
     char* input_fname = argv[1];
 
