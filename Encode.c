@@ -7,7 +7,7 @@
 #define SQH 0.707106781186547  /* square root of 2 */
 #define SWAP(a,b)  tempr=(a); (a) = (b); (b) = tempr
 #define IMAGE_SIZE 512
-#define QF 5
+#define QF 50
 
 
 static void fft1();
@@ -453,7 +453,7 @@ void ac_proc(float** block){
 }
 
 void dc_proc(float dc){
-  int u32_dc = (int)dc;
+  int u32_dc = (int)(round(dc));
   int tmp = u32_dc;
   //doing dpcm
   u32_dc = u32_dc - dc_dpcm;
