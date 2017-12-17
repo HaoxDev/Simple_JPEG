@@ -7,7 +7,7 @@
 #define SQH 0.707106781186547  /* square root of 2 */
 #define SWAP(a,b)  tempr=(a); (a) = (b); (b) = tempr
 #define IMAGE_SIZE 512
-#define QF 50
+#define QF 5
 
 
 static void fft1();
@@ -373,7 +373,7 @@ int main(int argc,char **argv){
     }
 
     
-
+    
     
     // malloc and free each block, and process it.
     for( i = 0 ; i < IMAGE_SIZE / 8 ; i++){
@@ -395,16 +395,25 @@ int main(int argc,char **argv){
     
     //for testing, useless
     /*
-    float** block = get_block(20,20);
-    dct2(block,8);
-    quantization(block);
+    float** block = get_block(0,0);
+    block_proc(block);
+    if(byte_count != 0)
+    {
+      byte_for_output <<= 8 - byte_count;
+      output(byte_for_output);
+    }
+    //dct2(block,8);
+    //quantization(block);
+    
     for(i = 0; i < 8 ; i++){
         for(j = 0 ; j < 8 ; j++){
-            printf("%f\t",* (*(block+i)+j));
+            printf("%d\t",(int)round(* (*(block+i)+j)));
         }
         printf("\n");
     }
     */
+    
+    
     
     /*
     dc_proc(-24);
@@ -436,7 +445,7 @@ void block_proc(float** block){
   dct2(block,8);
   quantization(block);
   dc_proc(block[0][0]);
-  //ac_proc(block);
+  ac_proc(block);
 }
 
 void ac_proc(float** block){
@@ -521,24 +530,31 @@ void zig_zag_proc(float** block){
   int run = 0;
   int size = 0;
   for(i = 1 ; i < 64 ; i++){
-    x = zigZagOrder[i]/8;
-    y = (zigZagOrder[i]) % 8;
+    x = zigZagOrder[i]%8;
+    y = (zigZagOrder[i]) / 8;
     //process ac run
-    int val = (int)block[y][x];
-    if(val == 0)
+    int val = (int)round(block[y][x]);
+    //printf("size:%d val:%d count:%d\n",size,val,i);
+    //printf("%d ",val);
+    if(val == 0){
       run++;
+    }
     else{
       size = (int)(floor(log2((float)abs(val))) + 1);
       while(run > 15){
         run -= 15;
         //outputZRL
-        output_preproc(acHuffmanTable[225],acHuffmanLength[225]);
+        output_preproc(acHuffmanTable[240],acHuffmanLength[240]);
       }
+      //printf("run:%d size:%d\n",run,size);
+      //printf("size:%d val:%d count:%d\n",size,val,i);
       output_preproc(acHuffmanTable[16*run + size],acHuffmanLength[16*run + size]);
       output_preproc(get_diff_codeword(val),size);
+      run = 0;
     }
   }
   //SEND EOB
+  //printf("run:%d size:%d\n",0,0);
   output_preproc(acHuffmanTable[0],acHuffmanLength[0]);
 }
 
